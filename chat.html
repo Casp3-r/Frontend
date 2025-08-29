@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-black text-white flex flex-col h-screen">
+    <!-- Navbar -->
+    <header class="flex items-center px-4 py-3 bg-black">
+        <!-- Back Arrow -->
+        <a href="home.html" class="flex items-center text-white hover:text-gray-300">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                class="w-6 h-6 mr-2">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+        </a>
+
+        <!-- Logo -->
+        <div class="flex items-center space-x-2">
+            <img src="https://via.placeholder.com/40" alt="Logo" class="h-10 w-10 rounded-full" />
+        </div>
+
+        <!-- Search -->
+        <div class="flex-1 mx-4">
+            <input type="text" placeholder="search"
+                class="w-full rounded-full border px-4 py-2 bg-gray-900 text-white border-gray-700 placeholder-gray-400" />
+        </div>
+
+        <!-- Icons -->
+        <!-- Icons -->
+        <div class="flex items-center space-x-9 text-white relative" x-data="{ openMenu: false }">
+            <!-- List with dropdown -->
+            <div class="relative">
+                <button @click="openMenu = !openMenu">
+                    <i class="fa-solid fa-list text-xl cursor-pointer"></i>
+                </button>
+                <!-- Dropdown -->
+                <div x-show="openMenu" @click.away="openMenu = false"
+                    class="absolute right-0 mt-2 w-40 bg-gray-800 rounded-lg shadow-lg py-2 text-sm z-50">
+                    <a href="tips.html" class="block px-4 py-2 hover:bg-gray-700">Tips</a>
+                    <a href="about.html" class="block px-4 py-2 hover:bg-gray-700">About</a>
+                    <a href="logout.html" class="block px-4 py-2 hover:bg-gray-700">Logout</a>
+                </div>
+            </div>
+
+            <!-- Bell (go to chat) -->
+            <a href="chat.html">
+                <i class="fa-regular fa-bell text-xl cursor-pointer"></i>
+            </a>
+
+            <!-- User (go to profile) -->
+            <a href="profile.html">
+                <i class="fa-regular fa-user text-xl cursor-pointer"></i>
+            </a>
+        </div>
+    </header>
+
+
+    <!-- Main Content (Sidebar + Chat) -->
+    <div class="flex flex-1 overflow-hidden">
+        <div class="absolute inset-0 rounded-3xl opacity-10 pointer-events-none"
+            style="background-image:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48ZmlsdGVyIGlkPSJub2lzZUZpbHRlciI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuOCIgbnVtT2N0YXZlcz0iNCIvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWx0ZXI9InVybCgjbm9pc2VGaWx0ZXIpIi8+PC9zdmc+');">
+        </div>
+        <!-- Sidebar (Chats List) -->
+        <div
+            class="hidden md:flex flex-col w-1/4 bg-gradient-to-b from-teal-900/90 to-cyan-800/80 border-r border-gray-700">
+            <!-- Header -->
+            <div class="p-4 flex justify-between items-center border-b border-gray-700">
+                <h1 class="text-lg font-bold">Chats</h1>
+                <button
+                    class="w-10 h-10 flex items-center justify-center bg-white/20 rounded-full hover:bg-white/30">+</button>
+            </div>
+            <!-- Search -->
+            <div class="p-2">
+                <input type="text" placeholder="Search..."
+                    class="w-full p-2 rounded-lg bg-white/10 text-sm focus:outline-none">
+            </div>
+            <!-- Chat List -->
+            <div class="flex-1 overflow-y-auto">
+                <div class="p-4 hover:bg-white/10 cursor-pointer flex items-center gap-3 border-b border-gray-700">
+                    <div class="w-10 h-10 bg-cyan-700 rounded-full flex items-center justify-center">A</div>
+                    <div class="flex-1">
+                        <p class="font-semibold">Alice</p>
+                        <p class="text-xs text-gray-400 truncate">Hey, how are you?</p>
+                    </div>
+                    <span class="text-xs text-gray-400">12:30</span>
+                </div>
+                <div class="p-4 hover:bg-white/10 cursor-pointer flex items-center gap-3 border-b border-gray-700">
+                    <div class="w-10 h-10 bg-cyan-700 rounded-full flex items-center justify-center">B</div>
+                    <div class="flex-1">
+                        <p class="font-semibold">Bob</p>
+                        <p class="text-xs text-gray-400 truncate">Let’s meet tomorrow!</p>
+                    </div>
+                    <span class="text-xs text-gray-400">11:15</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="flex-1 flex flex-col bg-gradient-to-b from-cyan-900/50 to-black">
+
+            <!-- Chat Header -->
+            <div class="p-4 flex justify-between items-center border-b border-gray-700">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-teal-700 rounded-full flex items-center justify-center">A</div>
+                    <div>
+                        <p class="font-semibold">Alice</p>
+                        <p class="text-xs text-gray-400">Online</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <!-- Phone Icon -->
+                    <button
+                        class="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full hover:bg-white/20">
+                        <i class="fa-solid fa-phone text-gray-300 hover:text-white"></i>
+                    </button>
+                    <!-- Video Icon -->
+                    <button
+                        class="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full hover:bg-white/20">
+                        <i class="fa-solid fa-video text-gray-300 hover:text-white"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                <!-- Sender -->
+                <div class="flex justify-start">
+                    <div class="bg-white/20 rounded-xl px-4 py-2 max-w-xs">
+                        Hey! How’s it going?
+                    </div>
+                </div>
+                <!-- Receiver -->
+                <div class="flex justify-end">
+                    <div class="bg-teal-700/50 rounded-xl px-4 py-2 max-w-xs">
+                        I’m good, just working on my project. You?
+                    </div>
+                </div>
+                <!-- Sender -->
+                <div class="flex justify-start">
+                    <div class="bg-white/20 rounded-xl px-4 py-2 max-w-xs">
+                        Same here 😅
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-4 border-t border-gray-700 flex items-center gap-2">
+                <button
+                    class="w-10 h-10 flex items-center justify-center bg-white/20 rounded-full hover:bg-white/30">+</button>
+                <input type="text" placeholder="Type a message..."
+                    class="flex-1 p-2 rounded-lg bg-white/10 focus:outline-none">
+                <button class="text-gray-300 hover:text-white">😊</button>
+                <button class="bg-teal-700 px-4 py-2 rounded-lg hover:bg-cyan-600">Send</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

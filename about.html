@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About Us - Phone Valuation App</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome (icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-black text-gray-200 font-sans">
+
+    <header class="flex items-center px-4 py-3 bg-black shadow-md">
+        <a href="home.html" class="flex items-center text-white hover:text-gray-300">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                class="w-6 h-6 mr-2">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+        </a>
+        <div class="flex items-center space-x-2">
+            <img src="https://via.placeholder.com/40" alt="Logo" class="h-10 w-10 rounded-full" />
+        </div>
+        <div class="flex-1 mx-4">
+            <input type="text" placeholder="Search"
+                class="w-full rounded-full border px-4 py-2 bg-gray-900 text-white border-gray-700 placeholder-gray-400" />
+        </div>
+        <!-- Icons -->
+        <div class="flex items-center space-x-9 text-white relative" x-data="{ openMenu: false }">
+            <!-- List with dropdown -->
+            <div class="relative">
+                <button @click="openMenu = !openMenu">
+                    <i class="fa-solid fa-list text-xl cursor-pointer"></i>
+                </button>
+                <!-- Dropdown -->
+                <div x-show="openMenu" @click.away="openMenu = false"
+                    class="absolute right-0 mt-2 w-40 bg-gray-800 rounded-lg shadow-lg py-2 text-sm z-50">
+                    <a href="tips.html" class="block px-4 py-2 hover:bg-gray-700">Tips</a>
+                    <a href="about.html" class="block px-4 py-2 hover:bg-gray-700">About Us</a>
+                    <a href="logout.html" class="block px-4 py-2 hover:bg-gray-700">Logout</a>
+                </div>
+            </div>
+
+            <!-- Bell (go to chat) -->
+            <a href="chat.html">
+                <i class="fa-regular fa-bell text-xl cursor-pointer"></i>
+            </a>
+
+            <!-- User (go to profile) -->
+            <a href="profile.html">
+                <i class="fa-regular fa-user text-xl cursor-pointer"></i>
+            </a>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="relative bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-20 text-center">
+        <h1 class="text-4xl font-bold mb-4">About Our App</h1>
+        <p class="max-w-2xl mx-auto text-lg">
+            A smarter way to know your phone’s true value, maintain its health, and connect with trusted repair & resale
+            services.
+        </p>
+    </section>
+
+    <!-- About Content -->
+    <section class="max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-10">
+        <!-- Left: Image -->
+        <div class="rounded-2xl overflow-hidden shadow-lg border-2 border-cyan-500">
+            <img src="Screenshot 2025-08-27 112521.png" alt="App Preview" class="w-full h-auto" />
+        </div>
+
+        <!-- Right: Text -->
+        <div class="flex flex-col justify-center space-y-6">
+            <h2 class="text-2xl font-bold bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">Who
+                We Are</h2>
+            <p>
+                Our Phone Valuation App was built to help smartphone users in Nigeria and beyond
+                instantly know the fair market value of their device, understand its health condition,
+                and connect with verified vendors and repairers.
+            </p>
+            <p>
+                Whether you’re selling, repairing, or simply curious about your phone’s worth,
+                our platform gives you clarity and peace of mind.
+            </p>
+            <ul class="space-y-3">
+                <li class="flex items-center"><i class="fas fa-check-circle text-cyan-400 mr-2"></i> Instant phone
+                    valuation with detailed breakdowns</li>
+                <li class="flex items-center"><i class="fas fa-check-circle text-cyan-400 mr-2"></i> Connect with
+                    trusted repair services</li>
+                <li class="flex items-center"><i class="fas fa-check-circle text-cyan-400 mr-2"></i> Smart tips to
+                    extend your phone’s lifespan</li>
+                <li class="flex items-center"><i class="fas fa-check-circle text-cyan-400 mr-2"></i> Secure transactions
+                    with buyer/seller protection</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Mission -->
+    <section class="bg-gradient-to-r from-teal-600 to-cyan-600 py-16">
+        <div class="max-w-4xl mx-auto text-center px-6">
+            <h2 class="text-2xl font-bold text-white mb-6">Our Mission</h2>
+            <p class="text-lg text-gray-200">
+                We believe every phone has value.
+                Our mission is to make phone ownership more transparent and sustainable,
+                by helping users maximize their devices’ worth and reduce electronic waste
+                through repair, resale, and smarter usage.
+            </p>
+        </div>
+    </section>
+
+    <!-- Team / Community -->
+    <section class="max-w-6xl mx-auto px-6 py-16">
+        <h2
+            class="text-2xl font-bold bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent text-center mb-10">
+            Why People Choose Us
+        </h2>
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="bg-gray-900 rounded-2xl shadow p-6 text-center border border-cyan-500">
+                <i class="fas fa-mobile-alt text-3xl text-cyan-400 mb-3"></i>
+                <h3 class="font-semibold mb-2">Accurate Valuations</h3>
+                <p class="text-sm text-gray-400">We use real-time market data to give you the most accurate phone
+                    pricing.</p>
+            </div>
+            <div class="bg-gray-900 rounded-2xl shadow p-6 text-center border border-cyan-500">
+                <i class="fas fa-tools text-3xl text-cyan-400 mb-3"></i>
+                <h3 class="font-semibold mb-2">Trusted Repairs</h3>
+                <p class="text-sm text-gray-400">Find reliable repair services with transparent pricing and guaranteed
+                    quality.</p>
+            </div>
+            <div class="bg-gray-900 rounded-2xl shadow p-6 text-center border border-cyan-500">
+                <i class="fas fa-leaf text-3xl text-cyan-400 mb-3"></i>
+                <h3 class="font-semibold mb-2">Sustainable Choice</h3>
+                <p class="text-sm text-gray-400">By repairing and reselling, you extend device life and reduce e-waste.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gradient-to-r from-teal-600 to-cyan-600 text-white py-6 text-center">
+        <p>&copy; 2025 Phone Valuation App. All rights reserved.</p>
+    </footer>
+
+</body>
+
+</html>

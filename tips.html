@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tips & Guides</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome (icons) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Alpine.js (dropdown) -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="min-h-screen bg-gray-900 text-white">
+
+    <!-- Navbar -->
+    <header class="flex items-center px-4 py-3 bg-black shadow-md">
+        <a href="home.html" class="flex items-center text-white hover:text-gray-300">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                class="w-6 h-6 mr-2">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+        </a>
+        <div class="flex items-center space-x-2">
+            <img src="https://via.placeholder.com/40" alt="Logo" class="h-10 w-10 rounded-full" />
+        </div>
+        <div class="flex-1 mx-4">
+            <input type="text" placeholder="Search"
+                class="w-full rounded-full border px-4 py-2 bg-gray-900 text-white border-gray-700 placeholder-gray-400" />
+        </div>
+        <!-- Icons -->
+        <div class="flex items-center space-x-9 text-white relative" x-data="{ openMenu: false }">
+            <!-- List with dropdown -->
+            <div class="relative">
+                <button @click="openMenu = !openMenu">
+                    <i class="fa-solid fa-list text-xl cursor-pointer"></i>
+                </button>
+                <!-- Dropdown -->
+                <div x-show="openMenu" @click.away="openMenu = false"
+                    class="absolute right-0 mt-2 w-40 bg-gray-800 rounded-lg shadow-lg py-2 text-sm z-50">
+                    <a href="tips.html" class="block px-4 py-2 hover:bg-gray-700">Tips</a>
+                    <a href="about.html" class="block px-4 py-2 hover:bg-gray-700">About Us</a>
+                    <a href="logout.html" class="block px-4 py-2 hover:bg-gray-700">Logout</a>
+                </div>
+            </div>
+
+            <!-- Bell (go to chat) -->
+            <a href="chat.html">
+                <i class="fa-regular fa-bell text-xl cursor-pointer"></i>
+            </a>
+
+            <!-- User (go to profile) -->
+            <a href="profile.html">
+                <i class="fa-regular fa-user text-xl cursor-pointer"></i>
+            </a>
+        </div>
+    </header>
+
+    <!-- Page content -->
+    <main class="relative z-10 max-w-6xl mx-auto p-6 space-y-8">
+
+        <!-- Title -->
+        <div class="flex items-center justify-between">
+            <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Tips & Guides</h1>
+        </div>
+
+        <!-- Best Phones by Preference -->
+        <section>
+            <h2 class="text-xl md:text-2xl font-semibold mb-4">Best Phones by Preference</h2>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-gray-800 p-4 rounded-xl shadow-md">
+                    <h3 class="font-semibold mb-2">📸 Camera</h3>
+                    <p class="text-sm text-white/85">iPhone 14 Pro Max, Pixel 7 Pro, Galaxy S23 Ultra.</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl shadow-md">
+                    <h3 class="font-semibold mb-2">🎮 Gaming</h3>
+                    <p class="text-sm text-white/85">ASUS ROG Phone, iPhone 13 Pro Max, OnePlus 11.</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl shadow-md">
+                    <h3 class="font-semibold mb-2">💰 Resale Value</h3>
+                    <p class="text-sm text-white/85">iPhones retain the highest value; Samsung flagships follow.</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl shadow-md">
+                    <h3 class="font-semibold mb-2">🔥 In-Demand</h3>
+                    <p class="text-sm text-white/85">iPhone 12/13, Samsung A-series, Tecno Spark.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Budget Finder -->
+        <section>
+            <h2 class="text-xl md:text-2xl font-semibold mb-4">Find Devices Within Your Budget</h2>
+            <div class="bg-gray-800 p-4 rounded-xl shadow-md">
+                <div class="grid sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm mb-2">Enter your budget (₦)</label>
+                        <input type="number" id="budgetInput" placeholder="e.g. 200000"
+                            class="w-full bg-gray-700 border border-white/20 rounded px-3 py-2 text-sm text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm mb-2">Preference (optional)</label>
+                        <select id="preferenceFilter"
+                            class="w-full bg-gray-700 border border-white/20 rounded px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <option value="">Any</option>
+                            <option value="camera">Camera</option>
+                            <option value="gaming">Gaming</option>
+                            <option value="resale">Resale Value</option>
+                            <option value="demand">High Demand</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <button id="budgetBtn"
+                        class="mt-3 px-4 py-2 bg-teal-500 text-black rounded-lg font-semibold hover:bg-teal-400">
+                        Find Phones
+                    </button>
+                </div>
+                <ul id="budgetResults" class="mt-4 space-y-2 text-sm"></ul>
+            </div>
+        </section>
+        <!-- How Vendors Assess Value -->
+        <section class="pb-10">
+            <h2 class="text-xl md:text-2xl font-semibold mb-4">How Vendors Assess Phone Value</h2>
+            <div class="bg-gray-800 p-4 rounded-xl shadow-md grid md:grid-cols-2 gap-4 text-sm text-white/90">
+                <div class="space-y-2">
+                    <p>✅ Physical condition (screen, frame, water damage).</p>
+                    <p>✅ Battery health (higher % = higher value).</p>
+                    <p>✅ Functionality (camera, speaker, sensors, Face ID/Fingerprint).</p>
+                </div>
+                <div class="space-y-2">
+                    <p>✅ Market demand & age of device (newer + popular = higher price).</p>
+                    <p>✅ Storage size & variant (higher storage often adds value).</p>
+                    <p>✅ Lock status (iCloud/SIM locks reduce value significantly).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Market Demand Chart -->
+        <section>
+            <h2 class="text-xl md:text-2xl font-semibold mb-4">Market Demand</h2>
+            <div class="bg-gray-800 p-4 rounded-xl shadow-md flex justify-center">
+                <canvas id="demandChart" width="380" height="220"></canvas>
+            </div>
+        </section>
+    </main>
+
+    <!-- Scripts -->
+    <script>
+        // Demand chart
+        const ctx = document.getElementById('demandChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['iPhone 13', 'iPhone 12', 'Samsung A54', 'Tecno Spark', 'Infinix Hot'],
+                datasets: [{
+                    label: 'Market Demand',
+                    data: [90, 80, 70, 60, 55],
+                    backgroundColor: '#14b8a6',
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                plugins: { legend: { labels: { color: 'white' } } },
+                scales: {
+                    x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                    y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                }
+            }
+        });
+        // Mock data for budget finder
+        const phones = [
+            { name: "iPhone 11", price: 230000, tags: ["resale", "demand"] },
+            { name: "Samsung A54", price: 180000, tags: ["demand"] },
+            { name: "Tecno Spark 10", price: 100000, tags: ["demand"] },
+            { name: "Infinix Hot 12", price: 95000, tags: ["demand"] },
+            { name: "iPhone 13", price: 350000, tags: ["camera", "resale", "demand"] },
+            { name: "ASUS ROG Phone 6", price: 450000, tags: ["gaming"] },
+            { name: "OnePlus 11", price: 320000, tags: ["gaming"] },
+            { name: "Google Pixel 7", price: 300000, tags: ["camera"] },
+        ];
+
+        const budgetInput = document.getElementById('budgetInput');
+        const preferenceFilter = document.getElementById('preferenceFilter');
+        const results = document.getElementById('budgetResults');
+        document.getElementById('budgetBtn').addEventListener('click', findPhones);
+
+        function findPhones() {
+            const budget = Number(budgetInput.value || 0);
+            const pref = preferenceFilter.value;
+
+            results.innerHTML = "";
+            let filtered = phones.filter(p => p.price <= budget);
+            if (pref) filtered = filtered.filter(p => p.tags.includes(pref));
+
+            if (filtered.length === 0) {
+                results.innerHTML = "<li class='opacity-90'>No phones found within this budget.</li>";
+            } else {
+                filtered
+                    .sort((a, b) => a.price - b.price)
+                    .forEach(p => {
+                        const li = document.createElement("li");
+                        li.className = "bg-black/30 rounded-lg px-3 py-2 flex items-center justify-between";
+                        li.innerHTML = `
+              <span>${p.name}</span>
+              <span class="font-semibold">₦${p.price.toLocaleString()}</span>
+            `;
+                        results.appendChild(li);
+                    });
+            }
+        }
+    </script>
+</body>
+
+</html>
