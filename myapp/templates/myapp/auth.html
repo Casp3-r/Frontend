@@ -1,0 +1,130 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login / Sign Up - Phone Valuation App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  </head>
+
+  <body class="bg-gray-900 flex items-center justify-center min-h-screen font-sans">
+    <div class="w-full max-w-md bg-gray-900 rounded-3xl shadow-lg border border-cyan-500 p-8">
+      <!-- Toggle pill -->
+      <div class="relative flex bg-gray-800 rounded-full mb-8">
+        <button id="loginTab" onclick="showForm('login')" class="w-1/2 py-3 rounded-full text-center font-semibold transition">Login</button>
+        <button id="signupTab" onclick="showForm('signup')" class="w-1/2 py-3 rounded-full text-center font-semibold transition">Sign Up</button>
+      </div>
+
+      <!-- Display Messages -->
+      {% if messages %}
+        <div class="mb-4 space-y-2">
+          {% for message in messages %}
+            <div class="p-3 rounded-lg {% if message.tags == 'error' %}
+                bg-red-500
+              {% else %}
+                bg-green-500
+              {% endif %} text-white text-sm">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <!-- Login Form -->
+      <form id="loginForm" method="POST" action="{% url 'auth' %}" class="space-y-5">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="login" />
+
+        <div>
+          <label class="block mb-1 text-sm text-gray-300">Username</label>
+          <input type="text" name="username" placeholder="Enter your username" required class="w-full px-4 py-3 rounded-lg bg-gray-800 text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+        </div>
+
+        <div>
+          <label class="block mb-1 text-sm text-gray-300">Password</label>
+          <input type="password" name="password" placeholder="Enter your password" required class="w-full px-4 py-3 rounded-lg bg-gray-800 text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold rounded-lg hover:opacity-90 transition">Login</button>
+      </form>
+
+      <!-- Signup Form -->
+      <form id="signupForm" method="POST" action="{% url 'auth' %}" class="hidden space-y-5">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="signup" />
+
+        <div>
+          <label class="block mb-1 text-sm text-gray-300">Username</label>
+          {{ signup_form.username }} {% if signup_form.username.errors %}
+            <div class="text-red-400 text-xs mt-1">{{ signup_form.username.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div>
+          <label class="block mb-1 text-sm text-gray-300">Email (optional)</label>
+          {{ signup_form.email }} {% if signup_form.email.errors %}
+            <div class="text-red-400 text-xs mt-1">{{ signup_form.email.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div>
+          <label class="block mb-1 text-sm text-gray-300">Password</label>
+          {{ signup_form.password1 }} {% if signup_form.password1.errors %}
+            <div class="text-red-400 text-xs mt-1">{{ signup_form.password1.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div>
+          <label class="block mb-1 text-sm text-gray-300">Confirm Password</label>
+          {{ signup_form.password2 }} {% if signup_form.password2.errors %}
+            <div class="text-red-400 text-xs mt-1">{{ signup_form.password2.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold rounded-lg hover:opacity-90 transition">Sign Up</button>
+      </form>
+    </div>
+
+    <script>
+              // Default state: Login active
+            document.getElementById("loginTab").classList.add("bg-white", "text-black");
+              function showForm(type) {
+                  const loginForm = document.getElementById("loginForm");
+                  const signupForm = document.getElementById("signupForm");
+                  const loginTab = document.getElementById("loginTab");
+                  const signupTab = document.getElementById("signupTab");
+
+                  if (type === "login") {
+                      loginForm.classList.remove("hidden");
+                      signupForm.classList.add("hidden");
+                      loginTab.classList.add("bg-white", "text-black");
+                      signupTab.classList.remove("bg-white", "text-black");
+                      signupTab.classList.add("text-white");
+                  } else {
+                      signupForm.classList.remove("hidden");
+                      loginForm.classList.add("hidden");
+                      signupTab.classList.add("bg-white", "text-black");
+                      loginTab.classList.remove("bg-white", "text-black");
+                      loginTab.classList.add("text-white");
+                  }
+              }
+
+              {%if signup_form.errors %}
+              setTimeout(() => showForm('signup'), 100);
+              {% elif login_form.errors %}
+              setTimeout(() => showForm('login'), 100);
+              {% endif %}
+
+      document.addEventListener('DOMContentLoaded', function() {
+          {% if auto_show_login %}
+          showForm('login');
+          {% endif %}
+
+          // Pre-fill username if available (alternative approach)
+          {% if request.session.new_user_username %}
+          document.querySelector('input[name="username"]').value = "{{ request.session.new_user_username }}";
+          {% endif %}
+      });
+    </script>
+  </body>
+</html>

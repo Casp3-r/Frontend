@@ -1,0 +1,343 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs" defer></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+
+  <body class="bg-black text-white flex flex-col h-screen">
+    <!-- WebSocket Data Elements -->
+    {% if active_chat %}
+    <div id="chat-id" class="hidden">{{ active_chat.id }}</div>
+    <div id="chat-username" class="hidden">{{ request.user.username }}</div>
+    {% endif %}
+
+    <!-- Navbar -->
+    <header class="flex items-center px-4 py-3 bg-black">
+      <a
+        href="{% url 'home' %}"
+        class="flex items-center text-white hover:text-gray-300"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          class="w-6 h-6 mr-2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+      </a>
+
+      <div class="flex items-center space-x-2">
+        <img
+          src="{% static 'images/logo.png' %}"
+          alt="Logo"
+          class="h-10 w-10 rounded-full"
+        />
+      </div>
+
+      <div class="flex-1 mx-4">
+        <input
+          type="text"
+          placeholder="search"
+          class="w-full rounded-full border px-4 py-2 bg-gray-900 text-white border-gray-700 placeholder-gray-400"
+        />
+      </div>
+
+      <div
+        class="flex items-center space-x-9 text-white relative"
+        x-data="{ openMenu: false }"
+      >
+        <div class="relative">
+          <button @click="openMenu = !openMenu">
+            <i class="fa-solid fa-list text-xl cursor-pointer"></i>
+          </button>
+          <div
+            x-show="openMenu"
+            @click.away="openMenu = false"
+            class="absolute right-0 mt-2 w-40 bg-gray-800 rounded-lg shadow-lg py-2 text-sm z-50"
+          >
+            <a href="{% url 'tips' %}" class="block px-4 py-2 hover:bg-gray-700"
+              >Tips</a
+            >
+            <a
+              href="{% url 'about' %}"
+              class="block px-4 py-2 hover:bg-gray-700"
+              >About</a
+            >
+            <form action="{% url 'logout' %}" method="post" class="inline">
+              {% csrf_token %}
+              <button
+                type="submit"
+                class="block px-4 py-2 hover:bg-gray-700 w-full text-left"
+              >
+                <i class="fa-solid fa-right-from-bracket mr-2"></i>Logout
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <a href="{% url 'chat' %}">
+          <i class="fa-regular fa-bell text-xl cursor-pointer"></i>
+        </a>
+
+        <a href="{% url 'profile' %}">
+          <i class="fa-regular fa-user text-xl cursor-pointer"></i>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="flex flex-1 overflow-hidden">
+      <!-- Sidebar (Chat List) -->
+      <div
+        class="hidden md:flex flex-col w-1/4 bg-gradient-to-b from-teal-900/90 to-cyan-800/80 border-r border-gray-700"
+      >
+        <div
+          class="p-4 flex justify-between items-center border-b border-gray-700"
+        >
+          <h1 class="text-lg font-bold">Chats</h1>
+        </div>
+
+        <div class="flex-1 overflow-y-auto">
+          {% for chat in chats %}
+          <a href="{% url 'chat_detail' chat.id %}">
+            <div
+              class="p-4 hover:bg-white/10 flex items-center gap-3 border-b border-gray-700"
+            >
+              <div
+                class="w-10 h-10 bg-cyan-700 rounded-full flex items-center justify-center"
+              >
+                {% if request.user == chat.vendor %} {{
+                chat.customer.username|first|upper }} {% else %} {{
+                chat.vendor.username|first|upper }} {% endif %}
+              </div>
+
+              <div class="flex-1">
+                <p class="font-semibold">
+                  {% if request.user == chat.vendor %} {{ chat.customer.username
+                  }} {% else %} {{ chat.vendor.username }} {% endif %}
+                </p>
+                <p class="text-xs text-gray-400 truncate">
+                  {% if chat.messages.last %} {{ chat.messages.last.text }} {%
+                  else %} No messages yet {% endif %}
+                </p>
+              </div>
+
+              <span class="text-xs text-gray-400">
+                {% if chat.messages.last %} {{
+                chat.messages.last.timestamp|date:"H:i" }} {% endif %}
+              </span>
+            </div>
+          </a>
+          {% empty %}
+          <p class="text-center text-gray-400 p-4">No chats yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Main Chat Area -->
+      <div
+        class="flex-1 flex flex-col bg-gradient-to-b from-cyan-900/50 to-black"
+      >
+        {% if active_chat %}
+        <!-- Chat Header -->
+        <div
+          class="p-4 flex justify-between items-center border-b border-gray-700"
+        >
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 bg-teal-700 rounded-full flex items-center justify-center"
+            >
+              {% if request.user == active_chat.vendor %} {{
+              active_chat.customer.username|first|upper }} {% else %} {{
+              active_chat.vendor.username|first|upper }} {% endif %}
+            </div>
+
+            <div>
+              <p class="font-semibold">
+                {% if request.user == active_chat.vendor %} {{
+                active_chat.customer.username }} {% else %} {{
+                active_chat.vendor.username }} {% endif %}
+              </p>
+              <p class="text-xs text-gray-400">Online</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3">
+          {% for message in messages %}
+          <div
+            class="flex {% if message.sender == request.user %}justify-end{% else %}justify-start{% endif %}"
+          >
+            <div
+              class="{% if message.sender == request.user %}bg-teal-700/50{% else %}bg-white/20{% endif %} rounded-xl px-4 py-2 max-w-xs"
+            >
+              {{ message.text }}
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-gray-400 text-center">No messages yet.</p>
+          {% endfor %}
+        </div>
+
+        <!-- Input -->
+        <div class="p-4 border-t border-gray-700 flex items-center gap-2">
+          <form id="chat-form" class="flex w-full gap-2">
+            {% csrf_token %}
+            <input
+              id="chat-message-input"
+              type="text"
+              placeholder="Type a message..."
+              class="flex-1 p-2 rounded-lg bg-white/10 focus:outline-none"
+            />
+            <button
+              type="submit"
+              class="bg-teal-700 px-4 py-2 rounded-lg hover:bg-cyan-600"
+            >
+              Send
+            </button>
+          </form>
+        </div>
+        {% else %}
+        <div class="flex-1 flex items-center justify-center text-gray-400">
+          Select a chat to start messaging
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- WebSocket Script -->
+    {% if active_chat %}
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // Get values from hidden divs that were populated by Django
+        const chatIdElement = document.getElementById("chat-id");
+        const usernameElement = document.getElementById("chat-username");
+
+        if (!chatIdElement || !usernameElement) {
+          console.error("Required elements not found");
+          return;
+        }
+
+        const chatId = chatIdElement.textContent;
+        const username = usernameElement.textContent;
+
+        let chatSocket;
+        const msgContainer = document.getElementById("chat-messages");
+
+        if (msgContainer) {
+          msgContainer.scrollTop = msgContainer.scrollHeight;
+        }
+
+        function addMessageToUI(message, sender, isSender = false) {
+          const wrapper = document.createElement("div");
+          wrapper.className =
+            "flex " + (isSender ? "justify-end" : "justify-start");
+          wrapper.innerHTML = `
+                  <div class="${
+                    isSender ? "bg-teal-700/50" : "bg-white/20"
+                  } rounded-xl px-4 py-2 max-w-xs">
+                      ${message}
+                  </div>`;
+
+          if (msgContainer) {
+            msgContainer.appendChild(wrapper);
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+          }
+        }
+
+        // Initialize WebSocket connection
+        function connectWebSocket() {
+          const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+          chatSocket = new WebSocket(
+            `${wsScheme}://${window.location.host}/ws/chat/${chatId}/`
+          );
+
+          chatSocket.onopen = function (e) {
+            console.log("✅ WebSocket connected");
+          };
+
+          chatSocket.onmessage = function (e) {
+            try {
+              const data = JSON.parse(e.data);
+              addMessageToUI(
+                data.message,
+                data.sender,
+                data.sender === username
+              );
+            } catch (error) {
+              console.error("Error parsing message:", error);
+            }
+          };
+
+          chatSocket.onerror = function (e) {
+            console.error("WebSocket error:", e);
+          };
+
+          chatSocket.onclose = function (e) {
+            console.log("WebSocket disconnected");
+            // Try to reconnect after 3 seconds
+            setTimeout(connectWebSocket, 3000);
+          };
+        }
+
+        // Message sending handler
+        const chatForm = document.getElementById("chat-form");
+        if (chatForm) {
+          chatForm.onsubmit = function (e) {
+            e.preventDefault();
+            const input = document.getElementById("chat-message-input");
+            const message = input.value.trim();
+
+            if (
+              message &&
+              chatSocket &&
+              chatSocket.readyState === WebSocket.OPEN
+            ) {
+              chatSocket.send(
+                JSON.stringify({
+                  message: message,
+                  sender: username,
+                })
+              );
+              input.value = "";
+            }
+          };
+        }
+
+        // Enter key handler
+        const messageInput = document.getElementById("chat-message-input");
+        if (messageInput) {
+          messageInput.addEventListener("keypress", function (e) {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              document
+                .getElementById("chat-form")
+                .dispatchEvent(new Event("submit"));
+            }
+          });
+        }
+
+        // Start WebSocket connection
+        connectWebSocket();
+      });
+    </script>
+    {% endif %}
+  </body>
+</html>

@@ -1,0 +1,705 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="antialiased">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Phone Swap — Value & Upgrade</title>
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Alpine app logic (your phoneSwap.js) -->
+    <script src="{% static 'myapp/js/phoneSwap.js' %}" defer></script>
+    <!-- Alpine -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+            defer></script>
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Share API polyfill for older browsers -->
+    <script src="https://cdn.jsdelivr.net/npm/share-api-polyfill@1.0.8/share.min.js"></script>
+    <!-- html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+            defer></script>
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          rel="stylesheet" />
+    <meta name="csrf-token" content="{{ csrf_token }}" />
+    <meta name="user-authenticated"
+          content="{{ user.is_authenticated|yesno:'true,false' }}" />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap");
+      html,
+      body {
+        font-family: "Inter", ui-sans-serif, system-ui, -apple-system,
+          "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      }
+      /* Share Modal Animations */
+      .share-card {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        backdrop-filter: blur(20px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5),
+          0 0 0 1px rgba(6, 182, 212, 0.1),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      }
+
+      /* Smooth transitions */
+      .fade-in {
+        animation: fadeIn 0.6s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Platform button hover effects */
+      .platform-btn {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .platform-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .platform-btn:hover::before {
+        left: 100%;
+      }
+
+      /* Health bar animations */
+      .health-bar {
+        transition: width 1.5s ease-in-out;
+      }
+
+      /* Score circle animation */
+      @keyframes scoreProgress {
+        from {
+          stroke-dashoffset: 283;
+        }
+        to {
+          stroke-dashoffset: calc(283 - (283 * var(--score, 0) / 100));
+        }
+      }
+
+      .score-circle {
+        animation: scoreProgress 2s ease-out forwards;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen bg-gradient-to-br from-slate-900 via-zinc-900 to-black text-slate-100">
+    <!-- NAVBAR -->
+    <header class="sticky top-0 z-50 bg-black/40 backdrop-blur-sm border-b border-slate-800">
+      <div class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center gap-3">
+            <a href="{% url 'home' %}" class="flex items-center gap-3">
+              <img src="{% static 'myapp/images/logo.png' %}"
+                   alt="PhoneSwap"
+                   class="h-10 w-10 rounded-full shadow-sm" />
+              <span class="font-extrabold tracking-tight text-xl">PhoneSwap</span>
+            </a>
+          </div>
+          <form method="GET"
+                action="{% url 'home' %}"
+                class="hidden md:block flex-1 mx-6">
+            <div class="relative">
+              <input type="text"
+                     name="q"
+                     placeholder="Search phones, vendors..."
+                     class="w-full rounded-full border border-slate-700 bg-slate-900/70 px-4 py-2 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition" />
+              <button type="submit"
+                      class="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1 text-sm font-semibold hover:scale-105 transition shadow">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </button>
+            </div>
+          </form>
+          <div class="flex items-center gap-4">
+            <div x-data="{open:false}" class="relative">
+              <button @click="open = !open"
+                      class="p-2 rounded-full hover:bg-white/5 transition">
+                <i class="fa-solid fa-bars"></i>
+              </button>
+              <div x-show="open"
+                   @click.away="open=false"
+                   x-transition
+                   class="absolute right-0 mt-2 w-44 bg-slate-800/95 border border-slate-700 rounded-xl shadow-lg py-2 text-sm">
+                <a class="block px-4 py-2 hover:bg-slate-700" href="{% url 'tips' %}">Tips</a>
+                <a class="block px-4 py-2 hover:bg-slate-700" href="{% url 'about' %}">About</a>
+                {% if user.is_authenticated %}
+                  <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button class="w-full text-left px-4 py-2 hover:bg-slate-700">Logout</button>
+                  </form>
+                {% else %}
+                  <a class="block px-4 py-2 hover:bg-slate-700" href="{% url 'auth' %}">Login</a>
+                {% endif %}
+              </div>
+            </div>
+            <a href="{% url 'chat' %}"
+               class="relative p-2 rounded-full hover:bg-white/5 transition">
+              <i class="fa-regular fa-bell"></i>
+              {% if chats.exists %}
+                <span class="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center bg-rose-500 text-xs text-white border-2 border-black animate-pulse">
+                  {{ chats.count }}
+                </span>
+              {% endif %}
+            </a>
+            <a href="{% url 'profile' %}"
+               class="p-2 rounded-full hover:bg-white/5 transition">
+              <i class="fa-regular fa-user"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+    <!-- MAIN CONTENT -->
+    <main class="py-8 md:py-12">
+      <div class="max-w-6xl mx-auto px-4 md:px-6">
+        <div x-data="phoneSwap()"
+             x-init="init()"
+             @beforeunload.window="saveState()"
+             class="relative bg-gradient-to-r from-cyan-700/30 via-teal-600/25 to-sky-700/20 border border-slate-700 rounded-2xl p-4 md:p-8 shadow-2xl overflow-hidden">
+          <!-- subtle bg shape (mobile hidden improvements) -->
+          <div class="hidden md:block absolute -right-40 -top-24 w-96 h-96 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full blur-3xl pointer-events-none animate-[spin_40s_linear_infinite]">
+          </div>
+          <!-- Hero / header -->
+          <div class="flex flex-col items-center text-center gap-3 mb-6">
+            <h1 class="text-2xl md:text-4xl font-extrabold">Value your phone. Upgrade confidently.</h1>
+            <p class="text-sm md:text-base text-slate-200">
+              Get an instant valuation and see how much to add for your dream
+              upgrade.
+            </p>
+            <div class="flex gap-2 md:gap-3 bg-white/5 rounded-full p-1 mt-3">
+              <button @click="step=1"
+                      :class="step===1 ? 'bg-white text-slate-900 shadow':'text-white hover:bg-white/10'"
+                      class="rounded-full px-4 md:px-5 py-2 text-sm md:text-base font-semibold">
+                Value Your Phone
+              </button>
+              <button @click="step=4"
+                      :class="step===4 ? 'bg-white text-slate-900 shadow':'text-white hover:bg-white/10'"
+                      class="rounded-full px-4 md:px-5 py-2 text-sm md:text-base font-semibold">Dream Phone</button>
+            </div>
+          </div>
+          <!-- Step indicator -->
+          <div class="flex justify-center mb-6">
+            <div class="flex gap-2 md:gap-3 bg-white/5 rounded-full p-1">
+              <button @click="step=1"
+                      :class="step===1 ? 'bg-white text-slate-900':'text-white/80 hover:bg-white/5'"
+                      class="px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm">Basic</button>
+              <button @click="(brand && model && storage)?step=2:null"
+                      :class="step===2 ? 'bg-white text-slate-900':'text-white/80 hover:bg-white/5'"
+                      class="px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm">Conditions</button>
+              <button @click="(brand && model && storage && step >= 2) ? step=3 : null"
+                      :class="step===3 ? 'bg-white text-slate-900':'text-white/80 hover:bg-white/5'"
+                      :disabled="!(brand && model && storage && step >= 2)"
+                      class="px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm"
+                      :title="!(brand && model && storage && step >= 2) ? 'Complete conditions first' : ''">
+                Results
+              </button>
+              <button @click="step=4"
+                      :class="step===4 ? 'bg-white text-slate-900':'text-white/80 hover:bg-white/5'"
+                      class="px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm">Dream</button>
+            </div>
+          </div>
+          <!-- content grid -->
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
+            <!-- LEFT: Steps panels -->
+            <section class="space-y-6">
+              <!-- === STEP 1: BASIC INFO === -->
+              <div x-show="step===1"
+                   x-transition
+                   class="bg-white/5 border border-white/5 rounded-2xl p-4 md:p-6 shadow-md">
+                <h2 class="text-lg md:text-xl font-semibold mb-3">Basic Info</h2>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block mb-1 text-sm font-medium">Brand</label>
+                    <select x-model="brand"
+                            class="w-full rounded-lg p-2 bg-slate-900/60 border border-slate-700">
+                      <option value="">Select Brand</option>
+                      <template x-for="b in Object.keys(models)" :key="b">
+                        <option :value="b" x-text="b"></option>
+                      </template>
+                    </select>
+                  </div>
+                  <template x-if="availableSeries().length > 0">
+                    <div>
+                      <label class="block mb-1 text-sm font-medium">Series</label>
+                      <select x-model="series"
+                              id="series"
+                              class="w-full rounded-lg p-2 bg-slate-900/60 border border-slate-700">
+                        <option value="">Select Series</option>
+                        <template x-for="s in availableSeries()" :key="s">
+                          <option :value="s"
+                                  x-text="typeof seriesLabels[brand]?.[s] === 'object' ? Object.values(seriesLabels[brand][s])[0] : seriesLabels[brand]?.[s] || (s + ' Series')">
+                          </option>
+                        </template>
+                      </select>
+                    </div>
+                  </template>
+                  <div>
+                    <label class="block mb-1 text-sm font-medium">Model</label>
+                    <select x-model="model"
+                            class="w-full rounded-lg p-2 bg-slate-900/60 border border-slate-700"
+                            :disabled="!(brand && (brand !== 'Samsung' || series))">
+                      <option value="">Select model</option>
+                      <template x-for="m in availableModels()" :key="m">
+                        <option :value="m" x-text="m"></option>
+                      </template>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block mb-1 text-sm font-medium">Storage</label>
+                    <select x-model="storage"
+                            class="w-full rounded-lg p-2 bg-slate-900/60 border border-slate-700"
+                            :disabled="!model">
+                      <option value="">Select storage</option>
+                      <template x-for="s in availableStorages()" :key="s">
+                        <option :value="s" x-text="s"></option>
+                      </template>
+                    </select>
+                  </div>
+                  <div class="flex flex-col sm:flex-row gap-3 pt-2 justify-between">
+                    <button @click="step=0"
+                            class="w-full sm:w-auto px-4 py-2 rounded-lg border border-white/10 hover:bg-white/5 transition">
+                      Back
+                    </button>
+                    <button @click="step=2"
+                            :disabled="!(brand && model && storage)"
+                            class="w-full sm:w-auto px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 font-semibold transition disabled:opacity-50">
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <!-- === STEP 2: CONDITIONS === -->
+              <div x-show="step===2"
+                   x-transition
+                   class="bg-white/5 border border-white/5 rounded-2xl p-4 md:p-6 shadow-md">
+                <h2 class="text-lg md:text-xl font-semibold mb-3">Phone Condition</h2>
+                <div class="space-y-4">
+                  <template x-if="brand === 'iPhone'">
+                    <div>
+                      <label class="block mb-1 text-sm font-medium">
+                        Battery Health: <span x-text="battery + '%'"></span>
+                      </label>
+                      <div class="flex items-center gap-3 cursor-pointer p-3 rounded-lg bg-white/5">
+                        <input type="range"
+                               min="0"
+                               max="100"
+                               x-model.number="battery"
+                               class="w-full" />
+                      </div>
+                    </div>
+                  </template>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <template x-for="issue in filteredIssues()" :key="issue.key">
+                      <label class="flex items-center gap-3 cursor-pointer p-2 rounded-lg bg-white/5">
+                        <input type="checkbox"
+                               x-model="issue.state"
+                               class="w-5 h-5 rounded border-slate-500 text-cyan-500" />
+                        <span x-text="issue.label" class="text-sm"></span>
+                      </label>
+                    </template>
+                  </div>
+                  <div class="flex justify-between items-center pt-2">
+                    <button @click="step=1"
+                            class="px-4 py-2 rounded-lg border border-white/10 hover:bg-white/5 transition">
+                      Back
+                    </button>
+                    <button @click="finish()"
+                            class="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 font-semibold transition">
+                      Your Valuation
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <!-- === STEP 3: RESULTS === -->
+              <div x-show="step===3"
+                   x-transition
+                   id="resultsSection"
+                   class="bg-white/5 border border-white/5 rounded-2xl p-4 md:p-6 shadow-md">
+                <h2 class="text-xl font-semibold mb-8">Phone Valuation</h2>
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-6 p-6">
+                  <div x-init="$nextTick(() => createChart())"
+                       class="w-40 h-40 rounded-full flex items-center justify-center mb-8">
+                    <canvas id="valuationChart" width="220" height="220"></canvas>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-sm text-slate-300">Score</p>
+                    <p class="text-2xl font-bold" x-text="score + ' / 100'"></p>
+                    <p class="text-sm text-slate-300 mt-3">Valued at</p>
+                    <p class="text-2xl font-bold text-emerald-300"
+                       x-text="formatCurrencyRange(finalValue)"></p>
+                    <!-- Changed baseValue to finalValue -->
+                    <div class="mt-4">
+                      <button @click="shareResults"
+                              class="group relative px-6 py-3 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 rounded-full font-semibold transition-all transform hover:scale-105 shadow-lg">
+                        <i class="fa-solid fa-share-nodes mr-2"></i>
+                        Share Results
+                        <div class="absolute inset-0 rounded-full bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <!-- Health Metrics Section -->
+                <div class="mb-6 space-y-3">
+                  <template x-for="(value, key) in health" :key="key">
+                    <div class="flex items-center gap-3">
+                      <div class="w-24 text-sm capitalize" x-text="key"></div>
+                      <div class="flex-1">
+                        <div class="w-full bg-white/10 rounded-full h-3 overflow-hidden">
+                          <div class="h-3 rounded-full transition-all"
+                               :style="'width:'+value+'%'"
+                               :class="{'bg-emerald-400': key==='battery', 'bg-sky-400': key==='screen', 'bg-rose-400': key==='speaker', 'bg-yellow-300': key==='camera'}">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="w-12 text-right font-semibold" x-text="value + '%'"></div>
+                    </div>
+                  </template>
+                </div>
+                <div x-show="tips.length > 0" class="mt-6 p-4 bg-white/5 rounded-lg">
+                  <h3 class="text-lg font-semibold mb-3">Repair Suggestions to Increase Value</h3>
+                  <div class="space-y-2">
+                    <template x-for="tip in repairSuggestions" :key="tip.issue">
+                      <div class="flex justify-between items-center py-2 border-b border-white/10 last:border-b-0">
+                        <div>
+                          <span x-text="tip.label" class="text-slate-300"></span>
+                          <div class="text-xs text-emerald-400 mt-1">
+                            Adds
+                            <span x-text="formatCurrency(tip.improvement)" class="font-semibold"></span>
+                            to value
+                          </div>
+                        </div>
+                        <span class="text-emerald-300 font-semibold">
+                          +<span x-text="formatCurrency(tip.improvement)"></span>
+                        </span>
+                      </div>
+                    </template>
+                  </div>
+                  <!-- Total Potential Value Increase -->
+                  <div x-show="totalRepairImprovement > 0"
+                       class="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                    <div class="flex justify-between items-center">
+                      <div>
+                        <div class="font-semibold text-emerald-300">Total Potential Value Increase</div>
+                        <div class="text-xs text-emerald-400">If all repairs are done</div>
+                      </div>
+                      <div class="text-right">
+                        <div class="text-lg font-bold text-emerald-300">
+                          +<span x-text="formatCurrency(totalRepairImprovement)"></span>
+                        </div>
+                        <div class="text-xs text-emerald-400">
+                          New value:
+                          <span x-text="formatCurrencyRange(potentialValueAfterRepairs)"></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Value Breakdown (Add this to show base vs final) -->
+                <div class="mt-6 flex justify-between">
+                  <button @click="step=2"
+                          class="px-4 py-2 rounded-lg border border-white/10 hover:bg-white/5 transition">Back</button>
+                  <button @click="step=4"
+                          class="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 font-semibold transition">
+                    Next: Dream Phone
+                  </button>
+                </div>
+              </div>
+              <!-- === STEP 4: DREAM PHONE === -->
+              <div x-show="step===4"
+                   x-data="dreamPhone()"
+                   x-transition
+                   class="bg-white/5 border border-white/5 rounded-2xl p-4 md:p-6 shadow-md">
+                <h2 class="text-lg md:text-xl font-semibold mb-3">Find Your Dream Phone</h2>
+                <div class="space-y-3">
+                  <div>
+                    <label class="block mb-1 text-sm font-medium">Brand</label>
+                    <select x-model="dreamBrand"
+                            class="w-full rounded-lg p-2 bg-slate-900/60 border border-slate-700">
+                      <option value="">Select brand</option>
+                      <template x-for="b in Object.keys(brands)" :key="b">
+                        <option :value="b" x-text="b"></option>
+                      </template>
+                    </select>
+                  </div>
+                  <template x-if="availableSeries().length > 0">
+                    <div>
+                      <label class="block mb-1 text-sm font-medium">Series</label>
+                      <select x-model="dreamSeries"
+                              class="w-full rounded-lg p-2 bg-slate-900/60 border border-slate-700">
+                        <option value="">Select series</option>
+                        <template x-for="s in availableSeries()" :key="s">
+                          <option :value="s" x-text="seriesLabels[dreamBrand]?.[s] || (s + ' Series')"></option>
+                        </template>
+                      </select>
+                    </div>
+                  </template>
+                  <div>
+                    <label class="block mb-1 text-sm font-medium">Model</label>
+                    <select x-model="dreamModel"
+                            class="w-full rounded-lg p-2 bg-slate-900/60 border border-slate-700">
+                      <option value="">Select model</option>
+                      <template x-for="m in availableModels()" :key="m">
+                        <option :value="m" x-text="m"></option>
+                      </template>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block mb-1 text-sm font-medium">Storage</label>
+                    <select x-model="dreamStorage"
+                            class="w-full rounded-lg p-2 bg-slate-900/60 border border-slate-700">
+                      <option value="">Select storage</option>
+                      <template x-for="s in availableStorages()" :key="s">
+                        <option :value="s" x-text="s"></option>
+                      </template>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block mb-1 text-sm font-medium">Condition</label>
+                    <select x-model="dreamCondition"
+                            class="w-full rounded-lg p-2 bg-slate-900/60 border border-slate-700">
+                      <option value="">Select Condition</option>
+                      <option>Brand New</option>
+                      <option>Open Box</option>
+                      <option>UK Used</option>
+                      <option>Second Hand</option>
+                    </select>
+                  </div>
+                  <div class="bg-white/5 rounded-lg p-4 text-sm">
+                    <p class="text-slate-300">
+                      Your Phone Valuation:
+                      <span class="font-semibold text-emerald-300"
+                            x-text="formatCurrency($store.phoneData.finalValue || 0)"></span>
+                    </p>
+                    <p class="mt-2">
+                      Selected:
+                      <span x-text="dreamBrand + (dreamModel ? ' ' + dreamModel : '') + (dreamStorage ? ' ' + dreamStorage : '') + (dreamCondition ? ' (' + dreamCondition + ')' : '')"></span>
+                    </p>
+                    <p class="mt-3 text-lg font-bold text-green-300">
+                      Dream Price:
+                      <span x-text="formatCurrency(dreamPrice)"></span>
+                    </p>
+                    <template x-if="amountToAdd > 0">
+                      <p class="text-lg font-bold text-rose-400 mt-3">
+                        You need to add:
+                        <span x-text="formatCurrency(amountToAdd)"></span>
+                      </p>
+                    </template>
+                    <template x-if="amountToReceive > 0">
+                      <p class="text-lg font-bold text-emerald-400 mt-3">
+                        You'll receive:
+                        <span x-text="formatCurrency(amountToReceive)"></span>
+                      </p>
+                    </template>
+                    <template x-if="amountToAdd === 0 && amountToReceive === 0">
+                      <p class="text-lg font-bold text-blue-400 mt-3">Even exchange - no additional funds needed</p>
+                    </template>
+                  </div>
+                  <div class="flex justify-between gap-2">
+                    <button @click="step=3"
+                            class="px-4 py-2 rounded-lg border border-white/10 hover:bg-white/5 transition">
+                      Back
+                    </button>
+                    <button @click="step=0"
+                            class="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 font-semibold transition">
+                      Value Another Phone
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <!-- RIGHT: Sidebar -->
+            <aside class="space-y-6">
+              <!-- Tips -->
+              <div class="bg-white/5 border border-white/5 rounded-2xl p-4 md:p-5 shadow-md">
+                <h3 class="font-semibold">Valuation Impact</h3>
+                <p class="text-sm text-slate-400 mt-1">Issues affecting your phone's value</p>
+                <div class="mt-3 space-y-2">
+                  <!-- Show loading when phone is selected but tips are empty -->
+                  <template x-if="tips.length === 0 && brand && model">
+                    <div class="text-center py-4">
+                      <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                      <p class="text-sm text-slate-300 mt-2">Analyzing your phone...</p>
+                    </div>
+                  </template>
+                  <!-- Show message when no phone is selected -->
+                  <template x-if="!brand || !model">
+                    <p class="text-sm text-slate-300 py-4 text-center">Select a phone to see valuation impact</p>
+                  </template>
+                  <div x-show="step === 3" class="space-y-3">
+                    <!-- Tips Section -->
+                    <template x-for="tip in tips" :key="tip.label">
+                      <div class="bg-white/10 p-2 md:p-3 rounded-lg flex justify-between items-center text-sm fade-in">
+                        <div x-text="tip.label"
+                             :class="{ 'text-rose-400': tip.price < 0, 'text-emerald-400': tip.price === 0 }"></div>
+                        <div class="font-semibold"
+                             :class="{ 'text-rose-400': tip.price < 0, 'text-emerald-400': tip.price === 0 }"
+                             x-text="tip.price < 0 ? formatCurrency(tip.price) : (tip.price === 0 ? 'No impact' : formatCurrency(tip.price))">
+                        </div>
+                      </div>
+                    </template>
+                    <!-- Valuation Summary - inside the same container but separate -->
+                    <div class="mt-4 p-4 bg-white/5 rounded-lg border border-white/10">
+                      <h3 class="text-lg font-semibold mb-4 text-center">Valuation Summary</h3>
+                      <div class="space-y-3">
+                        <!-- Total Deductions -->
+                        <div class="flex justify-between items-center py-2 border-t border-white/10 pt-3">
+                          <div class="text-rose-300">
+                            <div class="font-medium">Total Deductions</div>
+                            <div class="text-xs text-rose-400">Based on condition issues</div>
+                          </div>
+                          <span class="text-rose-300 font-semibold">
+                            -<span x-text="formatCurrency(deduction.min)"></span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Repairs CTA -->
+              <div class="bg-gradient-to-tr from-slate-800/60 to-slate-700/30 border border-white/5 rounded-2xl p-4 md:p-5 shadow-md text-center">
+                <h4 class="font-semibold">Need Repairs?</h4>
+                <p class="text-sm text-slate-300 mt-1">Contact our certified engineer for quick fixes.</p>
+                <a href="tel:+2348012345678"
+                   class="mt-3 inline-block px-4 py-2 rounded-full bg-emerald-500 hover:bg-emerald-400 font-semibold transition">Call Engr. James</a>
+              </div>
+              <!-- Sellers preview -->
+              <div class="bg-white/5 border border-white/5 rounded-2xl p-4 shadow-md">
+                <h4 class="font-semibold mb-2">Top Vendors</h4>
+                <div class="space-y-3">
+                  {% for seller in sellers|slice:":4" %}
+                    <div class="flex items-center justify-between gap-3">
+                      <div class="flex items-center gap-3">
+                        <img src="{{ seller.logo.url }}"
+                             alt="{{ seller.name }}"
+                             class="h-12 w-12 rounded-lg object-cover" />
+                        <div>
+                          <div class="text-sm font-semibold">{{ seller.name }}</div>
+                          <div class="text-xs text-slate-300">Rating: ★★★★☆</div>
+                        </div>
+                      </div>
+                      <div class="flex gap-2">
+                        <a href="{% if user.is_authenticated %}{% url 'start_chat' seller.user.id %}{% else %}{% url 'auth' %}{% endif %}"
+                           class="px-3 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 transition">
+                          <i class="fa-solid fa-comment"></i>
+                        </a>
+                        <button
+                          class="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 transition whatsapp-btn"
+                          data-seller-name="{{ seller.name }}"
+                          data-whatsapp-number="{{ seller.whatsapp }}"
+                          {%
+                          if
+                          user.is_authenticated
+                          %}data-open-link="true"
+                          {%
+                          endif
+                          %}
+                          >
+                          <i class="fab fa-whatsapp"></i>
+                        </button>
+                      </div>
+                    </div>
+                  {% empty %}
+                    <p class="text-sm text-slate-300">No sellers available yet.</p>
+                  {% endfor %}
+                </div>
+                {% if sellers|length > 4 %}
+                  <div class="mt-3 text-center">
+                    <a href="{% url 'sellers' %}" class="text-sm underline">See all vendors</a>
+                  </div>
+                {% endif %}
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </main>
+    <!-- SELLER GRID (full width) -->
+    <section class="max-w-7xl mx-auto px-4 md:px-6 py-8">
+      <h3 class="text-xl md:text-2xl font-bold mb-4">Explore Sellers</h3>
+      <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+        {% for seller in sellers %}
+          <div class="group relative rounded-2xl overflow-hidden border border-white/5 bg-gradient-to-tr from-slate-800/40 to-slate-900/30 p-3 hover:scale-105 transform transition">
+            <img src="{{ seller.logo.url }}"
+                 alt="{{ seller.name }}"
+                 class="w-full h-36 object-cover rounded-lg mb-3" />
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="font-semibold">{{ seller.name }}</div>
+                <div class="text-xs text-slate-400">Trusted vendor</div>
+              </div>
+              <div class="flex gap-2 items-center">
+                <a href="{% if user.is_authenticated %}{% url 'start_chat' seller.user.id %}{% else %}{% url 'auth' %}{% endif %}"
+                   class="p-2 bg-cyan-600 rounded-full hover:scale-110 transition">
+                  <i class="fa-solid fa-comment text-white"></i>
+                </a>
+                <button
+                  class="p-2 bg-emerald-600 rounded-full hover:scale-110 transition whatsapp-btn"
+                  data-seller-name="{{ seller.name }}"
+                  data-whatsapp-number="{{ seller.whatsapp }}"
+                  {%
+                  if
+                  user.is_authenticated
+                  %}data-open-link="true"
+                  {%
+                  endif
+                  %}
+                  >
+                  <i class="fab fa-whatsapp text-white"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <p class="text-slate-400">No sellers available.</p>
+        {% endfor %}
+      </div>
+    </section>
+    <!-- WHATSAPP POPUP -->
+    <div id="whatsappPopup"
+         class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div class="bg-slate-900 rounded-xl p-6 w-80 text-center border border-slate-700">
+        <h3 class="font-semibold mb-1">WhatsApp Contact</h3>
+        <p id="popupSellerName" class="font-medium text-slate-200"></p>
+        <p id="popupSellerNumber" class="text-sm text-slate-300 mt-1"></p>
+        <a id="popupSellerLink"
+           href="#"
+           target="_blank"
+           class="mt-4 inline-block px-4 py-2 bg-emerald-500 rounded-full text-white font-semibold hover:bg-emerald-400 transition">Message on WhatsApp</a>
+        <button onclick="togglePopup()"
+                class="mt-3 inline-block px-4 py-2 text-sm rounded-lg bg-slate-800 border border-slate-700 text-slate-300">
+          Close
+        </button>
+      </div>
+    </div>
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800 mt-12 py-6">
+      <div class="max-w-7xl mx-auto px-4 md:px-6 text-center text-sm text-slate-400">
+        © {{ now.year }} PhoneSwap — All rights reserved.
+      </div>
+    </footer>
+  </body>
+</html>

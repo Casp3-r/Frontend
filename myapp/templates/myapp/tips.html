@@ -1,0 +1,389 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tips & Guides - Phone Valuation App</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome (icons) -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Alpine.js (dropdown) -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+      defer
+    ></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+
+  <body class="min-h-screen bg-gray-900 text-white">
+    <!-- Navbar -->
+    <header class="flex items-center px-4 py-3 bg-black shadow-md">
+      <a
+        href="{% url 'home' %}"
+        class="flex items-center text-white hover:text-gray-300"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          class="w-6 h-6 mr-2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+      </a>
+      <div class="flex items-center space-x-2">
+        <img
+          src="{% static 'images/logo.png' %}"
+          alt="Logo"
+          class="h-10 w-10 rounded-full"
+        />
+      </div>
+      <div class="flex-1 mx-4">
+        <input
+          type="text"
+          placeholder="Search"
+          class="w-full rounded-full border px-4 py-2 bg-gray-900 text-white border-gray-700 placeholder-gray-400"
+        />
+      </div>
+      <!-- Icons -->
+      <div
+        class="flex items-center space-x-9 text-white relative"
+        x-data="{ openMenu: false }"
+      >
+        <!-- List with dropdown -->
+        <div class="relative">
+          <button @click="openMenu = !openMenu">
+            <i class="fa-solid fa-list text-xl cursor-pointer"></i>
+          </button>
+          <!-- Dropdown -->
+          <div
+            x-show="openMenu"
+            @click.away="openMenu = false"
+            class="absolute right-0 mt-2 w-40 bg-gray-800 rounded-lg shadow-lg py-2 text-sm z-50"
+          >
+            <a href="{% url 'tips' %}" class="block px-4 py-2 hover:bg-gray-700"
+              >Tips</a
+            >
+            <a
+              href="{% url 'about' %}"
+              class="block px-4 py-2 hover:bg-gray-700"
+              >About Us</a
+            >
+            {% if user.is_authenticated %}
+            <form action="{% url 'logout' %}" method="post" class="inline">
+              {% csrf_token %}
+              <button
+                type="submit"
+                class="block px-4 py-2 hover:bg-gray-700 w-full text-left"
+              >
+                <i class="fa-solid fa-right-from-bracket mr-2"></i>Logout
+              </button>
+            </form>
+            {% else %}
+            <a
+              href="{% url 'auth' %}"
+              class="block px-4 py-2 hover:bg-gray-700"
+            >
+              <i class="fa-solid fa-right-to-bracket mr-2"></i>Login
+            </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Bell (go to chat) -->
+
+        <div class="relative">
+          <a href="{% url 'chat' %}" title="View Chats">
+            <i class="fa-regular fa-bell text-xl cursor-pointer"></i>
+            {% if chats.exists %}
+            <span
+              class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+            >
+              {{ chats.count }}
+            </span>
+            {% endif %}
+          </a>
+        </div>
+
+        <!-- User (go to profile) -->
+        <a href="{% url 'profile' %}">
+          <i class="fa-regular fa-user text-xl cursor-pointer"></i>
+        </a>
+      </div>
+    </header>
+
+    <!-- Page content -->
+    <main class="relative z-10 max-w-6xl mx-auto p-6 space-y-8">
+      <!-- Title -->
+      <div class="flex items-center justify-between">
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">
+          Tips & Guides
+        </h1>
+      </div>
+
+      <!-- Best Phones by Preference -->
+      <!-- Best Phones by Preference -->
+      <section>
+        <h2 class="text-xl md:text-2xl font-semibold mb-4">
+          Best Phones by Preference
+        </h2>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {% for category in phone_categories %}
+          <button
+            onclick="showCategoryPopup({{ forloop.counter0 }})"
+            class="bg-gray-800 p-4 rounded-xl shadow-md hover:bg-gray-700 transition cursor-pointer text-left group"
+          >
+            <h3 class="font-semibold mb-2">
+              {{ category.emoji }} {{ category.name }}
+            </h3>
+            <p class="text-sm text-white/85">{{ category.description }}</p>
+            <p
+              class="text-xs text-teal-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              Click to see top phones →
+            </p>
+          </button>
+          {% endfor %}
+        </div>
+      </section>
+
+      <!-- Budget Finder -->
+      <section>
+        <h2 class="text-xl md:text-2xl font-semibold mb-4">
+          Find Devices Within Your Budget
+        </h2>
+        <div class="bg-gray-800 p-4 rounded-xl shadow-md">
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm mb-2">Enter your budget (₦)</label>
+              <input
+                type="number"
+                id="budgetInput"
+                placeholder="e.g. 200000"
+                class="w-full bg-gray-700 border border-white/20 rounded px-3 py-2 text-sm text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm mb-2">Preference (optional)</label>
+              <select
+                id="preferenceFilter"
+                class="w-full bg-gray-700 border border-white/20 rounded px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+              >
+                <option value="">Any</option>
+                {% for category in phone_categories %}
+                <option value="{{ category.key }}">{{ category.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div>
+            <button
+              id="budgetBtn"
+              class="mt-3 px-4 py-2 bg-teal-500 text-black rounded-lg font-semibold hover:bg-teal-400"
+            >
+              Find Phones
+            </button>
+          </div>
+          <ul id="budgetResults" class="mt-4 space-y-2 text-sm"></ul>
+        </div>
+      </section>
+
+      <!-- How Vendors Assess Value -->
+      <section class="pb-10">
+        <h2 class="text-xl md:text-2xl font-semibold mb-4">
+          How Vendors Assess Phone Value
+        </h2>
+        <div
+          class="bg-gray-800 p-4 rounded-xl shadow-md grid md:grid-cols-2 gap-4 text-sm text-white/90"
+        >
+          <div class="space-y-2">
+            {% for point in assessment_points.left %}
+            <p>✅ {{ point }}</p>
+            {% endfor %}
+          </div>
+          <div class="space-y-2">
+            {% for point in assessment_points.right %}
+            <p>✅ {{ point }}</p>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <!-- Market Demand Chart -->
+      <section>
+        <h2 class="text-xl md:text-2xl font-semibold mb-4">Market Demand</h2>
+        <div class="bg-gray-800 p-4 rounded-xl shadow-md flex justify-center">
+          <canvas id="demandChart" width="380" height="220"></canvas>
+        </div>
+      </section>
+    </main>
+    <!-- Category Popup -->
+    <div
+      id="categoryPopup"
+      class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+    >
+      <div
+        class="bg-gray-800 p-6 rounded-lg w-full max-w-2xl max-h-96 overflow-y-auto"
+      >
+        <div class="flex justify-between items-center mb-4">
+          <h3 id="popupCategoryName" class="text-xl font-bold"></h3>
+          <button
+            onclick="closeCategoryPopup()"
+            class="text-gray-400 hover:text-white"
+          >
+            <i class="fa-solid fa-times text-xl"></i>
+          </button>
+        </div>
+        <p id="popupCategoryDesc" class="text-gray-300 mb-4"></p>
+        <div id="popupPhonesList" class="space-y-3"></div>
+      </div>
+    </div>
+    <!-- Scripts -->
+    <script>
+            // Demand chart
+            const ctx = document.getElementById('demandChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: {{ market_demand.labels|safe }},
+                    datasets: [{
+                        label: 'Market Demand',
+                        data: {{ market_demand.data }},
+                        backgroundColor: '#14b8a6',
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    plugins: { legend: { labels: { color: 'white' } } },
+                    scales: {
+                        x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                        y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                    }
+                }
+            });
+
+            // Phone data from Django context
+            const phones = {{ phones_json|safe }};
+
+            const budgetInput = document.getElementById('budgetInput');
+            const preferenceFilter = document.getElementById('preferenceFilter');
+            const results = document.getElementById('budgetResults');
+            document.getElementById('budgetBtn').addEventListener('click', findPhones);
+
+            function findPhones() {
+                const budget = Number(budgetInput.value || 0);
+                const pref = preferenceFilter.value;
+
+                results.innerHTML = "";
+                let filtered = phones.filter(p => p.price <= budget);
+                if (pref) filtered = filtered.filter(p => p.tags.includes(pref));
+
+                if (filtered.length === 0) {
+                    results.innerHTML = "<li class='opacity-90'>No phones found within this budget.</li>";
+                } else {
+                    filtered
+                        .sort((a, b) => a.price - b.price)
+                        .forEach(p => {
+                            const li = document.createElement("li");
+                            li.className = "bg-black/30 rounded-lg px-3 py-2 flex items-center justify-between";
+                            li.innerHTML = `
+                                <span>${p.name}</span>
+                                <span class="font-semibold">₦${p.price.toLocaleString()}</span>
+                            `;
+                            results.appendChild(li);
+                        });
+                }
+            }
+            // Category popup functions
+      function showCategoryPopup(categoryIndex) {
+          try {
+              const categories = {{ phone_categories_json|safe }};
+
+              // Debug: Check if categories exist
+              console.log('Categories:', categories);
+              console.log('Category index:', categoryIndex);
+
+              if (!categories || !categories[categoryIndex]) {
+                  console.error('Category not found');
+                  return;
+              }
+
+              const category = categories[categoryIndex];
+
+              document.getElementById('popupCategoryName').innerHTML = `${category.emoji} ${category.name}`;
+              document.getElementById('popupCategoryDesc').textContent = category.description;
+
+              const phonesList = document.getElementById('popupPhonesList');
+              phonesList.innerHTML = '';
+
+              // Check if phones exist
+              if (category.phones && category.phones.length > 0) {
+                  category.phones.forEach(phone => {
+                      const phoneElement = document.createElement('div');
+                      phoneElement.className = 'bg-gray-900 p-4 rounded-lg hover:bg-gray-700 transition';
+                      phoneElement.innerHTML = `
+                          <div class="flex justify-between items-start">
+                              <div class="flex-1">
+                                  <h4 class="font-semibold text-lg">${phone.name}</h4>
+                                  <p class="text-sm text-gray-400 mt-1">${phone.specs}</p>
+                              </div>
+                              <span class="text-teal-400 font-bold text-lg ml-4">₦${phone.price.toLocaleString()}</span>
+                          </div>
+                      `;
+                      phonesList.appendChild(phoneElement);
+                  });
+              } else {
+                  phonesList.innerHTML = '<p class="text-gray-400">No phones found in this category.</p>';
+              }
+
+              document.getElementById('categoryPopup').classList.remove('hidden');
+              document.body.style.overflow = 'hidden';
+
+          } catch (error) {
+              console.error('Error showing category popup:', error);
+          }
+      }
+
+      function closeCategoryPopup() {
+          document.getElementById('categoryPopup').classList.add('hidden');
+          document.body.style.overflow = 'auto';
+      }
+
+      // Close popup when clicking outside
+      document.getElementById('categoryPopup').addEventListener('click', function(e) {
+          if (e.target === this) {
+              closeCategoryPopup();
+          }
+      });
+
+      // Close with ESC key
+      document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && !document.getElementById('categoryPopup').classList.contains('hidden')) {
+              closeCategoryPopup();
+          }
+      });
+
+      // Test function - add this to check if it works
+      function testPopup() {
+          console.log('Testing popup...');
+          showCategoryPopup(0); // Test with first category
+      }
+    </script>
+  </body>
+</html>
